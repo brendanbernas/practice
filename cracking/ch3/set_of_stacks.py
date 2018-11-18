@@ -15,22 +15,43 @@
 # -> will have to create some sort of way to hold size
 
 from StringIO import StringIO
+
 from bitmap import BitMap
+
 from simple_stack import SimpleStack
 
-class Node():
-    "Simple node for a linked list"
-    def __init__(self, value):
-        self.value = value
-        self.next = None
+class MyBitMap(BitMap):
+    """
+    Extended BitMap to also find first set bit and dynamically extend its 
+    size
+    """
+    def firstSet(self):
+        """Get index of first set bit"""
+        if self.count == 0:
+            return None
+        for i in xrange(self.size()):
+            if self.test(i):
+                return i
+
+    def set(self, pos):
+        """
+        Set bit a specified position (index based)
+        If position is out of bounds, double size of the underlying bitmap 
+        aaray until it is in bounds.
+        """
+        while pos >= self.size():
+            self.bitmap.extend([0 for i in xrange(len(self.bitmap))])
+
+        return super(MyBitMap, self).set(pos)
 
 class SetOfStacks:
     def __init__(self, max=5):
         # start with a single stack
         self._data = []
-        self._createSubStack()
         self._initMax = max
-        self._topSubStackIndex = 0  # index for top sub stack
+        self._topSubStackIndex = 0
+        # set bits indicate there is space the specified index
+        self._bitmap = MyBitMap(max)
 
     def _createSubStack(self):
         self._data.append(SimpleStack())
@@ -39,29 +60,49 @@ class SetOfStacks:
         return self._data[index]
 
     def push(self, element):
-        # Is top stack full?
-        if self._getSubStack(self._topSubStackIndex).size == self._initMax:
-            # make new sub stack, index +1
+        # Find appropriate sub stack
+        index = self._bitmap.firstSet()
+        if index is None:
+            # stacks are full, create a new one
             self._createSubStack()
-            self._topSubStackIndex += 1
-        
-        stack = self._getSubStack(self._topSubStackIndex)
+            index = len(self._data) - 1
+            self._bitmap.set(index)
+
+        stack = self._getSubStack(index)
         stack.push(element)
 
+        # Is the sub-stack now full?
+        if stack.size == self._initMax:
+            self._bitmap.reset(index)
+
+    def _doPop(self, index):
+        stack = self._getSubStack(index)
+        out = stack.pop()
+        self._bitmap.set(index)
+        return out
+    
+    def _getTop(self):
+        for i in reversed(range(len(data))):
+            stack = self._getSubStack(i)
+            if stack.size > 0:
+                return i
+
     def pop(self):
-        # curr top substack empty
-        if self._getSubStack(self._topSubStackIndex).size == 0:
-            if self._topSubStackIndex == 0:
-                raise ValueError('Stack is empty')
-            self._bitmap.set(_topSubStackIndex)
-            self._topSubStackIndex -= 1
-        
-        return self._getSubStack(self._topSubStackIndex).pop()
+        index = len(self._data) - 1
+        if index is None:
+            raise ValueError('Entire stack is empty')
+
+        return self._doPop(index)
 
     def popAt(self, index):
-        """Pop at specific index"""
-        # todo lets build a bitmap which will decide which queue to push to next
-        pass
+        """Pop at specified index of sub-stack"""
+        if len(self._data) > index:
+           raise ValueError('Sub-stack does not exist') 
+            
+        if not self._bitmap.test(index):
+            raise ValueError('Sub-stack is empty')
+        
+        return self._doPop(index)
 
     def __repr__(self):
         out = StringIO()
@@ -71,4 +112,3 @@ class SetOfStacks:
                 out.write(`i` + ': ' + repr(subStack) + '\n')
                 i += 1
         return out.getvalue()[:-1]
-            

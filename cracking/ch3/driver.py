@@ -41,3 +41,6 @@ q2.push(1)
 from set_of_stacks import SetOfStacks
 
 q3 = SetOfStacks()
+
+# Q4 Implement a MyQueue class which implements a queue using two stacks.
+

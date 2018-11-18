@@ -40,7 +40,10 @@ q2.push(1)
 
 from set_of_stacks import SetOfStacks
 
-q3 = SetOfStacks()
+# Start with 15, 3 stacks of fix
+q3 = SetOfStacks()  # starts with 5 as max size
+for i in range(15):
+    q3.push(`i`)
 
 # Q4 Implement a MyQueue class which implements a queue using two stacks.
 

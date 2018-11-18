@@ -82,13 +82,13 @@ class SetOfStacks:
         return out
     
     def _getTop(self):
-        for i in reversed(range(len(data))):
+        for i in reversed(range(len(self._data))):
             stack = self._getSubStack(i)
             if stack.size > 0:
                 return i
 
     def pop(self):
-        index = len(self._data) - 1
+        index = self._getTop()
         if index is None:
             raise ValueError('Entire stack is empty')
 
@@ -96,10 +96,11 @@ class SetOfStacks:
 
     def popAt(self, index):
         """Pop at specified index of sub-stack"""
-        if len(self._data) > index:
+        top = self._getTop()
+        if not top or top < index:
            raise ValueError('Sub-stack does not exist') 
             
-        if not self._bitmap.test(index):
+        if self._getSubStack(index).size == 0:
             raise ValueError('Sub-stack is empty')
         
         return self._doPop(index)
